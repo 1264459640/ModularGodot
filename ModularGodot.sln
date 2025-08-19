@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ModularGodot.Framework", "ModularGodot.Framework", "{AA354C6A-526F-AF34-A5E9-3E404812B42D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{7D52C59C-F4FF-5AFA-7DFB-209D6B537FC7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TO.CommandHandlers", "ModularGodot.Framework\Core\TO.CommandHandlers\TO.CommandHandlers.csproj", "{18F7F258-9C21-492F-84E8-F1FB19E95A6D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{18F7F258-9C21-492F-84E8-F1FB19E95A6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18F7F258-9C21-492F-84E8-F1FB19E95A6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18F7F258-9C21-492F-84E8-F1FB19E95A6D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{18F7F258-9C21-492F-84E8-F1FB19E95A6D}.Debug|x64.Build.0 = Debug|Any CPU
+		{18F7F258-9C21-492F-84E8-F1FB19E95A6D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{18F7F258-9C21-492F-84E8-F1FB19E95A6D}.Debug|x86.Build.0 = Debug|Any CPU
+		{18F7F258-9C21-492F-84E8-F1FB19E95A6D}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{18F7F258-9C21-492F-84E8-F1FB19E95A6D}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{18F7F258-9C21-492F-84E8-F1FB19E95A6D}.Release|x64.ActiveCfg = Debug|Any CPU
+		{18F7F258-9C21-492F-84E8-F1FB19E95A6D}.Release|x64.Build.0 = Debug|Any CPU
+		{18F7F258-9C21-492F-84E8-F1FB19E95A6D}.Release|x86.ActiveCfg = Debug|Any CPU
+		{18F7F258-9C21-492F-84E8-F1FB19E95A6D}.Release|x86.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7D52C59C-F4FF-5AFA-7DFB-209D6B537FC7} = {AA354C6A-526F-AF34-A5E9-3E404812B42D}
+		{18F7F258-9C21-492F-84E8-F1FB19E95A6D} = {7D52C59C-F4FF-5AFA-7DFB-209D6B537FC7}
+	EndGlobalSection
+EndGlobal
