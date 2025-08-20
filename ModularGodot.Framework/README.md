@@ -174,6 +174,12 @@ dotnet run --project Tools/ProjectGenerator -- --enable-extension UI Audio
 dotnet run --project Tools/ExtensionGenerator -- --name MyExtension
 ```
 
+### .csproj 文件生成器
+```powershell
+# 为新扩展生成 .csproj 文件并自动添加到解决方案
+./Tools/CreateCsproj.ps1 -Name MyNewExtension
+```
+
 ## 📖 文档资源
 
 - **[快速开始指南](Docs/QuickStart.md)** - 5分钟上手
