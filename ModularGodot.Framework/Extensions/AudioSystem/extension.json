@@ -6,56 +6,12 @@
     "zh": "提供完整的音频管理功能，包括背景音乐、音效、语音等",
     "ja": "バックグラウンドミュージック、効果音、音声を含む完全なオーディオ管理機能を提供"
   },
-  "priority": "High",
   "author": "ModularGodot Team",
   "license": "MIT",
   "homepage": "https://github.com/ModularGodot/AudioSystem",
-  "tags": [
-    "audio",
-    "sound",
-    "music",
-    "voice",
-    "effects"
-  ],
   "dependencies": [
     "LogSystem >= 1.0.0",
     "EventBusSystem >= 1.0.0",
     "ResourceSystem >= 1.0.0"
-  ],
-  "services": [
-    {
-      "interface": "IAudioManagerService",
-      "implementation": "AudioManagerService",
-      "lifetime": "SingleInstance"
-    },
-    {
-      "interface": "IAudioManagerRepo",
-      "implementation": "AudioManagerRepo",
-      "lifetime": "SingleInstance"
-    }
-  ],
-  "commands": [
-    "PlaySoundCommand",
-    "PlayMusicCommand",
-    "PlayVoiceCommand",
-    "SetVolumeCommand",
-    "SetMuteCommand",
-    "StopAllAudioCommand",
-    "PreloadAudioCommand",
-    "StopMusicCommand",
-    "PauseMusicCommand",
-    "ResumeMusicCommand"
-  ],
-  "commandHandlers": [
-    "PlaySoundCommandHandler",
-    "PlayMusicCommandHandler",
-    "PlayVoiceCommandHandler",
-    "SetVolumeCommandHandler",
-    "SetMuteCommandHandler",
-    "StopAllAudioCommandHandler",
-    "PreloadAudioCommandHandler",
-    "StopMusicCommandHandler",
-    "PauseMusicCommandHandler",
-    "ResumeMusicCommandHandler"
   ]
 }

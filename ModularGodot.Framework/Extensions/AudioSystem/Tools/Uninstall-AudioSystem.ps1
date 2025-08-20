@@ -7,12 +7,12 @@ Write-Host "Script directory: $scriptDir" -ForegroundColor Cyan
 
 # Define the mapping between core projects and the AudioSystem junction points to remove
 $coreProjects = @(
-    "MF.CommandHandlers",
-    "MF.Commands",
-    "MF.Repositories",
-    "MF.Repositories.Abstractions",
-    "MF.Services",
-    "MF.Services.Abstractions"
+    "2_App\MF.CommandHandlers",
+    "2_App\MF.Commands",
+    "1_2_Backend\MF.Repositories",
+    "1_2_Backend\MF.Repositories.Abstractions",
+    "2_App\MF.Services",
+    "2_App\MF.Services.Abstractions"
 )
 
 # Process each core project
@@ -110,7 +110,7 @@ Write-Host "
 Processing MF.Commons" -ForegroundColor Cyan
 
 # Define paths for MF.Commons
-$coreProjectPath = Join-Path $scriptDir "..\..\..\..\ModularGodot.Framework\Core\MF.Commons\Extensions"
+$coreProjectPath = Join-Path $scriptDir "..\..\..\..\ModularGodot.Framework\Core\0_Base\MF.Commons\Extensions"
 $junctionPointPath = Join-Path $coreProjectPath "AudioSystem"
 
 # Resolve core project path

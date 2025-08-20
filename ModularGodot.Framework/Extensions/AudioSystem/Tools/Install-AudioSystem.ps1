@@ -7,12 +7,12 @@ Write-Host "Script directory: $scriptDir" -ForegroundColor Cyan
 
 # Define the mapping between extension directories and core projects
 $extensionMapping = @{
-    "CommandHandlers" = "MF.CommandHandlers"
-    "Commands" = "MF.Commands"
-    "Repositories" = "MF.Repositories"
-    "Repositories.Abstractions" = "MF.Repositories.Abstractions"
-    "Services" = "MF.Services"
-    "Services.Abstractions" = "MF.Services.Abstractions"
+    "CommandHandlers" = "2_App\MF.CommandHandlers"
+    "Commands" = "2_App\MF.Commands"
+    "Repositories" = "1_2_Backend\MF.Repositories"
+    "Repositories.Abstractions" = "1_2_Backend\MF.Repositories.Abstractions"
+    "Services" = "2_App\MF.Services"
+    "Services.Abstractions" = "2_App\MF.Services.Abstractions"
 }
 
 # Process each extension mapping
@@ -97,7 +97,7 @@ Processing MF.Commons" -ForegroundColor Cyan
 
 # Define paths for MF.Commons
 $extensionPath = Join-Path $scriptDir "..\Commons"
-$coreProjectPath = Join-Path $scriptDir "..\..\..\..\ModularGodot.Framework\Core\MF.Commons\Extensions"
+$coreProjectPath = Join-Path $scriptDir "..\..\..\..\ModularGodot.Framework\Core\0_Base\MF.Commons\Extensions"
 $targetFolderName = "AudioSystem"
 
 # Check if extension path exists
