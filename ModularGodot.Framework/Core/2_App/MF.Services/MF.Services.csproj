@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\1_2_Backend\MF.Repositories.Abstractions\MF.Repositories.Abstractions.csproj" />
     <ProjectReference Include="..\MF.Commands\MF.Commands.csproj" />
     <ProjectReference Include="..\MF.Data\MF.Data.csproj" />
     <ProjectReference Include="..\MF.Data.Abstractions\MF.Data.Abstractions.csproj" />

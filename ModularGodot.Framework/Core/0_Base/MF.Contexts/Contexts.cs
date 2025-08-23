@@ -23,6 +23,9 @@ public class Contexts : LazySingleton<Contexts>
         builder.RegisterModule<SingleModule>();
         builder.RegisterModule<MediatorModule>();
 
+        // 注册 NodeRegister
+        builder.Register(c => new NodeRegister(c)).SingleInstance();
+
         Container = builder.Build();
 
         _nodeRegister = Container.Resolve<NodeRegister>();

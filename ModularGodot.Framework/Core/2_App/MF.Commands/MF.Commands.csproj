@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\0_Base\MF.Commons\MF.Commons.csproj" />
       <ProjectReference Include="..\MF.Commons\MF.Commons.csproj" />
     </ItemGroup>
 

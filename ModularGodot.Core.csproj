@@ -1,0 +1,43 @@
+<Project Sdk="Godot.NET.Sdk/4.4.1">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Compile Remove="ModularGodot.Framework\Core\**\MF.*\**" />
+    <Compile Remove="ModularGodot.Framework\Extensions\**" />
+    <EmbeddedResource Remove="ModularGodot.Framework\Core\**\MF.*\**" />
+    <EmbeddedResource Remove="ModularGodot.Framework\Extensions\**" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="8.3.0" />
+    <PackageReference Include="GodotSharp" Version="4.4.1" />
+    <PackageReference Include="GDTask" Version="1.4.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="MediatR" Version="12.5.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.7" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.7" />
+    <PackageReference Include="R3" Version="1.3.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="ModularGodot.Framework\Core\0_Base\MF.Commons\MF.Commons.csproj" />
+    <ProjectReference Include="ModularGodot.Framework\Core\0_Base\MF.Contexts\MF.Contexts.csproj" />
+    <ProjectReference Include="ModularGodot.Framework\Core\1_1_Fronted\MF.Nodes.Abstractions\MF.Nodes.Abstractions.csproj" />
+    <ProjectReference Include="ModularGodot.Framework\Core\1_2_Backend\MF.Data\MF.Data.csproj" />
+    <ProjectReference Include="ModularGodot.Framework\Core\1_2_Backend\MF.Repositories\MF.Repositories.csproj" />
+    <ProjectReference Include="ModularGodot.Framework\Core\1_2_Backend\MF.Repositories.Abstractions\MF.Repositories.Abstractions.csproj" />
+    <ProjectReference Include="ModularGodot.Framework\Core\2_App\MF.Services\MF.Services.csproj" />
+    <ProjectReference Include="ModularGodot.Framework\Core\2_App\MF.Services.Abstractions\MF.Services.Abstractions.csproj" />
+    <ProjectReference Include="ModularGodot.Framework\Core\2_App\MF.Commands\MF.Commands.csproj" />
+    <ProjectReference Include="ModularGodot.Framework\Core\2_App\MF.CommandHandlers\MF.CommandHandlers.csproj" />
+    <ProjectReference Include="ModularGodot.Framework\Core\2_App\MF.Events\MF.Events.csproj" />
+  </ItemGroup>
+</Project>
