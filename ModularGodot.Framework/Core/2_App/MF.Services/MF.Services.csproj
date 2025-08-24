@@ -1,10 +1,11 @@
-﻿<Project Sdk="Godot.NET.Sdk/4.4.1">
+<Project Sdk="Godot.NET.Sdk/4.4.1">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\1_2_Backend\MF.Infrastructure.Abstractions\MF.Infrastructure.Abstractions.csproj" />
     <ProjectReference Include="..\..\1_2_Backend\MF.Repositories.Abstractions\MF.Repositories.Abstractions.csproj" />
     <ProjectReference Include="..\MF.Commands\MF.Commands.csproj" />
     <ProjectReference Include="..\MF.Data\MF.Data.csproj" />
