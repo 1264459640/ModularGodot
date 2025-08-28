@@ -12,10 +12,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\MF.Commons\MF.Commons.csproj" />
-      <ProjectReference Include="..\MF.Repositories.Abstractions\MF.Repositories.Abstractions.csproj" />
-      <ProjectReference Include="..\MF.Repositories\MF.Repositories.csproj" />
-      <ProjectReference Include="..\MF.Data\MF.Data.csproj" />
+      <ProjectReference Include="..\..\1_2_Backend\MF.Infrastructure.Abstractions\MF.Infrastructure.Abstractions.csproj" />
+      <ProjectReference Include="..\..\0_Base\MF.Commons\MF.Commons.csproj" />
+      <ProjectReference Include="..\..\1_2_Backend\MF.Repositories.Abstractions\MF.Repositories.Abstractions.csproj" />
+      <ProjectReference Include="..\..\1_2_Backend\MF.Repositories\MF.Repositories.csproj" />
+      <ProjectReference Include="..\..\1_2_Backend\MF.Data\MF.Data.csproj" />
     </ItemGroup>
 
 </Project>

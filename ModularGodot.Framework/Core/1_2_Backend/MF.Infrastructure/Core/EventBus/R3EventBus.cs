@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using MF.Infrastructure.Abstractions.Core.EventBus;
 using MF.Infrastructure.Abstractions.Core.Logging;
+using MF.Infrastructure.Bases;
 using R3;
 
 namespace MF.Infrastructure.Core.EventBus;
@@ -8,13 +9,12 @@ namespace MF.Infrastructure.Core.EventBus;
 /// <summary>
 /// 基于R3的事件总线实现
 /// </summary>
-public class R3EventBus : IEventBus, IDisposable
+public class R3EventBus : BaseInfrastructure, IEventBus
 {
     private readonly ConcurrentDictionary<Type, Subject<object>> _subjects = new();
     private readonly CompositeDisposable _disposables = new();
     private readonly IGameLogger _logger;
     private readonly object _lock = new();
-    private bool _disposed;
     
     /// <summary>
     /// 基于R3的事件总线实现
@@ -29,7 +29,7 @@ public class R3EventBus : IEventBus, IDisposable
     
     public async Task PublishAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default) where TEvent : EventBase
     {
-        if (_disposed)
+        if (IsDisposed)
         {
             _logger.LogWarning("Attempted to publish event on disposed EventBus: {EventType}", typeof(TEvent).Name);
             return;
@@ -53,7 +53,7 @@ public class R3EventBus : IEventBus, IDisposable
     
     public void Publish<TEvent>(TEvent @event) where TEvent : EventBase
     {
-        if (_disposed)
+        if (IsDisposed)
         {
             _logger.LogWarning("Attempted to publish event on disposed EventBus: {EventType}", typeof(TEvent).Name);
             return;
@@ -77,8 +77,7 @@ public class R3EventBus : IEventBus, IDisposable
     
     public IDisposable Subscribe<TEvent>(Action<TEvent> handler) where TEvent : EventBase
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(R3EventBus));
+        CheckDisposed();
         
         try
         {
@@ -169,21 +168,22 @@ public class R3EventBus : IEventBus, IDisposable
         });
     }
     
-    public void Dispose()
+    protected override void Dispose(bool disposing)
     {
-        if (_disposed) return;
-        
-        _logger.LogInformation("Disposing R3EventBus");
-        
-        lock (_lock)
+        if (disposing)
         {
-            if (_disposed) return;
+            _logger.LogInformation("Disposing R3EventBus");
             
             _disposables.Dispose();
+            foreach (var subject in _subjects.Values)
+            {
+                subject.Dispose();
+            }
             _subjects.Clear();
-            _disposed = true;
+            
+            _logger.LogInformation("R3EventBus disposed");
         }
         
-        _logger.LogInformation("R3EventBus disposed");
+        base.Dispose(disposing);
     }
 }

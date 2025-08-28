@@ -3,19 +3,18 @@ using MF.Commons.Core.Enums.Infrastructure;
 using MF.Contexts.Attributes;
 using MF.Infrastructure.Abstractions.Core.Logging;
 using MF.Infrastructure.Abstractions.Core.Monitoring;
+using MF.Infrastructure.Bases;
 
 namespace MF.Infrastructure.Core.Monitoring;
 
 /// <summary>
 /// 内存监控服务实现
 /// </summary>
-[SkipRegistration]
-public class MemoryMonitor : IMemoryMonitor, IDisposable
+public class MemoryMonitor : BaseInfrastructure, IMemoryMonitor
 {
     private readonly IGameLogger<MemoryMonitor> _logger;
     private readonly Timer _monitorTimer;
     private long _lastMemoryUsage;
-    private bool _disposed;
     
     public event Action<long>? MemoryPressureDetected;
     public event Action? AutoReleaseTriggered;
@@ -48,7 +47,7 @@ public class MemoryMonitor : IMemoryMonitor, IDisposable
     /// </summary>
     public void StartMonitoring()
     {
-        if (_disposed) return;
+        if (IsDisposed) return;
         
         _monitorTimer.Change(CheckInterval, CheckInterval);
         _logger.LogInformation("Memory monitoring started with interval: {Interval}", CheckInterval);
@@ -59,7 +58,7 @@ public class MemoryMonitor : IMemoryMonitor, IDisposable
     /// </summary>
     public void StopMonitoring()
     {
-        if (_disposed) return;
+        if (IsDisposed) return;
         
         _monitorTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         _logger.LogInformation("Memory monitoring stopped");
@@ -184,17 +183,17 @@ public class MemoryMonitor : IMemoryMonitor, IDisposable
         return $"{number:n1} {suffixes[counter]}";
     }
     
-    public void Dispose()
+    protected override void Dispose(bool disposing)
     {
-        if (_disposed) return;
+        if (disposing)
+        {
+            _logger.LogInformation("Disposing MemoryMonitor");
+            
+            _monitorTimer?.Dispose();
+            
+            _logger.LogInformation("MemoryMonitor disposed");
+        }
         
-        _logger.LogInformation("Disposing MemoryMonitor");
-        
-        StopMonitoring();
-        _monitorTimer.Dispose();
-        
-        _disposed = true;
-        
-        _logger.LogInformation("MemoryMonitor disposed");
+        base.Dispose(disposing);
     }
 }

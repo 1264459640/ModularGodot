@@ -1,12 +1,13 @@
 using Godot;
 using MF.Infrastructure.Abstractions.Core.Logging;
+using MF.Infrastructure.Bases;
 
 namespace MF.Infrastructure.Logging;
 
 /// <summary>
 /// Godot游戏日志实现
 /// </summary>
-public class GodotGameLogger : IGameLogger, IDisposable
+public class GodotGameLogger : BaseInfrastructure, IGameLogger
 {
     private static readonly Dictionary<string, Color> DefaultLogColors = new()
     {
@@ -21,7 +22,6 @@ public class GodotGameLogger : IGameLogger, IDisposable
     private readonly string _categoryName;
     private Dictionary<string, Color> _logColors = new(DefaultLogColors);
     private readonly object _lock = new();
-    private bool _disposed;
     
     public GodotGameLogger(string categoryName)
     {
@@ -71,7 +71,7 @@ public class GodotGameLogger : IGameLogger, IDisposable
     
     private void Log(string level, string message, params object[] args)
     {
-        if (_disposed) return;
+        if (IsDisposed) return;
         
         try
         {
@@ -95,14 +95,14 @@ public class GodotGameLogger : IGameLogger, IDisposable
         }
     }
     
-    public void Dispose()
+    protected override void Dispose(bool disposing)
     {
-        if (_disposed) return;
-        
-        lock (_lock)
+        if (disposing)
         {
-            _disposed = true;
+            // 没有需要特殊处理的资源
         }
+        
+        base.Dispose(disposing);
     }
 }
 

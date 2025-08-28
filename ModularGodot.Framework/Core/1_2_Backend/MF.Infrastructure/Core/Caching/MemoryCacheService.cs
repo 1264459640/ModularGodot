@@ -3,6 +3,7 @@ using System.Text.Json;
 using MF.Data.Configuration.Resources;
 using MF.Infrastructure.Abstractions.Core.Caching;
 using MF.Infrastructure.Abstractions.Core.Logging;
+using MF.Infrastructure.Bases;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace MF.Infrastructure.Core.Caching;
@@ -10,13 +11,12 @@ namespace MF.Infrastructure.Core.Caching;
 /// <summary>
 /// 内存缓存服务实现
 /// </summary>
-public class MemoryCacheService : ICacheService, IDisposable
+public class MemoryCacheService : BaseInfrastructure, ICacheService
 {
     private readonly IMemoryCache _memoryCache;
     private readonly IGameLogger<MemoryCacheService> _logger;
     private readonly CacheConfig _config;
     private readonly ConcurrentDictionary<string, CacheEntry> _entries = new();
-    private bool _disposed;
     
     // 统计信息
     private long _hits;
@@ -40,8 +40,7 @@ public class MemoryCacheService : ICacheService, IDisposable
     
     public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default) where T : class
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(MemoryCacheService));
+        CheckDisposed();
         
         try
         {
@@ -73,8 +72,7 @@ public class MemoryCacheService : ICacheService, IDisposable
     
     public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default) where T : class
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(MemoryCacheService));
+        CheckDisposed();
         
         try
         {
@@ -127,16 +125,14 @@ public class MemoryCacheService : ICacheService, IDisposable
     
     public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(MemoryCacheService));
+        CheckDisposed();
         
         return _memoryCache.TryGetValue(key, out _);
     }
     
     public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(MemoryCacheService));
+        CheckDisposed();
         
         try
         {
@@ -154,8 +150,7 @@ public class MemoryCacheService : ICacheService, IDisposable
     
     public async Task ClearAsync(CancellationToken cancellationToken = default)
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(MemoryCacheService));
+        CheckDisposed();
         
         try
         {
@@ -217,16 +212,25 @@ public class MemoryCacheService : ICacheService, IDisposable
         }
     }
     
-    public void Dispose()
+    protected override void Dispose(bool disposing)
     {
-        if (_disposed) return;
+        if (disposing)
+        {
+            _logger.LogInformation("Disposing MemoryCacheService");
+            
+            // 清理缓存
+            if (_memoryCache is MemoryCache mc)
+            {
+                mc.Compact(1.0); // 清空所有缓存
+            }
+            
+            _entries.Clear();
+            _evictionReasons.Clear();
+            
+            _logger.LogInformation("MemoryCacheService disposed");
+        }
         
-        _logger.LogInformation("Disposing MemoryCacheService");
-        
-        _entries.Clear();
-        _disposed = true;
-        
-        _logger.LogInformation("MemoryCacheService disposed");
+        base.Dispose(disposing);
     }
 }
 

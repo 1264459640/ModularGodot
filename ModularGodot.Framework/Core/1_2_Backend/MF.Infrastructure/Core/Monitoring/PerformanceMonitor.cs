@@ -2,20 +2,20 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using MF.Infrastructure.Abstractions.Core.Logging;
 using MF.Infrastructure.Abstractions.Core.Monitoring;
+using MF.Infrastructure.Bases;
 
 namespace MF.Infrastructure.Core.Monitoring;
 
 /// <summary>
 /// 性能监控实现
 /// </summary>
-public class PerformanceMonitor : IPerformanceMonitor, IDisposable
+public class PerformanceMonitor : BaseInfrastructure, IPerformanceMonitor
 {
     private readonly IGameLogger<PerformanceMonitor> _logger;
     private readonly ConcurrentDictionary<string, MetricData> _metrics = new();
     private readonly ConcurrentDictionary<string, long> _counters = new();
     private readonly ConcurrentDictionary<string, TimerData> _timers = new();
     private readonly ConcurrentDictionary<string, ActiveTimer> _activeTimers = new();
-    private bool _disposed;
     
     public PerformanceMonitor(IGameLogger<PerformanceMonitor> logger)
     {
@@ -62,7 +62,7 @@ public class PerformanceMonitor : IPerformanceMonitor, IDisposable
     
     public void RecordCounter(string name, long value = 1, Dictionary<string, string>? tags = null)
     {
-        if (_disposed) return;
+        if (IsDisposed) return;
         
         try
         {
@@ -79,7 +79,7 @@ public class PerformanceMonitor : IPerformanceMonitor, IDisposable
     
     public void RecordTimer(string name, TimeSpan duration, Dictionary<string, string>? tags = null)
     {
-        if (_disposed) return;
+        if (IsDisposed) return;
         
         try
         {
@@ -115,8 +115,7 @@ public class PerformanceMonitor : IPerformanceMonitor, IDisposable
     
     public IDisposable StartTimer(string name, Dictionary<string, string>? tags = null)
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(PerformanceMonitor));
+        CheckDisposed();
         
         var timer = new ActiveTimer(name, tags, this);
         var key = CreateKey(name, tags);
@@ -155,26 +154,27 @@ public class PerformanceMonitor : IPerformanceMonitor, IDisposable
         }
     }
     
-    public void Dispose()
+    protected override void Dispose(bool disposing)
     {
-        if (_disposed) return;
-        
-        _logger.LogInformation("Disposing PerformanceMonitor");
-        
-        // 完成所有活跃的计时器
-        foreach (var timer in _activeTimers.Values)
+        if (disposing)
         {
-            timer.Dispose();
+            _logger.LogInformation("Disposing PerformanceMonitor");
+            
+            // 完成所有活跃的计时器
+            foreach (var timer in _activeTimers.Values)
+            {
+                timer.Dispose();
+            }
+            
+            _metrics.Clear();
+            _counters.Clear();
+            _timers.Clear();
+            _activeTimers.Clear();
+            
+            _logger.LogInformation("PerformanceMonitor disposed");
         }
         
-        _metrics.Clear();
-        _counters.Clear();
-        _timers.Clear();
-        _activeTimers.Clear();
-        
-        _disposed = true;
-        
-        _logger.LogInformation("PerformanceMonitor disposed");
+        base.Dispose(disposing);
     }
 }
 
