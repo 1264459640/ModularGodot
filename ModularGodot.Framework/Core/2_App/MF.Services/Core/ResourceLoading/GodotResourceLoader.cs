@@ -177,7 +177,7 @@ public class GodotResourceLoader : BaseService, IResourceLoader
     
     #region Private Methods
     
-    private async Task<T?> LoadFromDiskAsync<T>(string path, Action<float>? progressCallback, CancellationToken cancellationToken) where T : class
+    private Task<T?> LoadFromDiskAsync<T>(string path, Action<float>? progressCallback, CancellationToken cancellationToken) where T : class
     {
         // 模拟进度更新
         progressCallback?.Invoke(0.3f);
@@ -190,10 +190,10 @@ public class GodotResourceLoader : BaseService, IResourceLoader
         // 类型转换
         if (resource is T typedResource)
         {
-            return typedResource;
+            return Task.FromResult<T?>(typedResource);
         }
         
-        return null;
+        return Task.FromResult<T?>(null);
     }
     
     #endregion

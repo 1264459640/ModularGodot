@@ -38,7 +38,7 @@ public class MemoryCacheService : BaseInfrastructure, ICacheService
         _logger.LogInformation("MemoryCacheService initialized with config: {Config}", _config);
     }
     
-    public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default) where T : class
+    public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default) where T : class
     {
         CheckDisposed();
         
@@ -55,22 +55,22 @@ public class MemoryCacheService : BaseInfrastructure, ICacheService
                     entry.LastAccessed = DateTime.UtcNow;
                 }
                 
-                return value as T;
+                return Task.FromResult(value as T);
             }
             
             Interlocked.Increment(ref _misses);
             _logger.LogDebug("Cache miss: {Key}", key);
-            return null;
+            return Task.FromResult<T?>(null);
         }
         catch (Exception ex)
         {
             Interlocked.Increment(ref _errors);
             _logger.LogError(ex, "Error getting cache value for key: {Key}", key);
-            return null;
+            return Task.FromResult<T?>(null);
         }
     }
     
-    public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default) where T : class
+    public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default) where T : class
     {
         CheckDisposed();
         
@@ -114,6 +114,8 @@ public class MemoryCacheService : BaseInfrastructure, ICacheService
             
             Interlocked.Increment(ref _sets);
             _logger.LogDebug("Cache set: {Key}, Size: {Size}, Expiration: {Expiration}", key, options.Size, actualExpiration);
+            
+            return Task.CompletedTask;
         }
         catch (Exception ex)
         {
@@ -123,14 +125,14 @@ public class MemoryCacheService : BaseInfrastructure, ICacheService
         }
     }
     
-    public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
     {
         CheckDisposed();
         
-        return _memoryCache.TryGetValue(key, out _);
+        return Task.FromResult(_memoryCache.TryGetValue(key, out _));
     }
     
-    public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
+    public Task RemoveAsync(string key, CancellationToken cancellationToken = default)
     {
         CheckDisposed();
         
@@ -139,6 +141,8 @@ public class MemoryCacheService : BaseInfrastructure, ICacheService
             _memoryCache.Remove(key);
             _entries.TryRemove(key, out _);
             _logger.LogDebug("Cache removed: {Key}", key);
+            
+            return Task.CompletedTask;
         }
         catch (Exception ex)
         {
@@ -148,7 +152,7 @@ public class MemoryCacheService : BaseInfrastructure, ICacheService
         }
     }
     
-    public async Task ClearAsync(CancellationToken cancellationToken = default)
+    public Task ClearAsync(CancellationToken cancellationToken = default)
     {
         CheckDisposed();
         
@@ -161,6 +165,8 @@ public class MemoryCacheService : BaseInfrastructure, ICacheService
             
             _entries.Clear();
             _logger.LogInformation("Cache cleared");
+            
+            return Task.CompletedTask;
         }
         catch (Exception ex)
         {

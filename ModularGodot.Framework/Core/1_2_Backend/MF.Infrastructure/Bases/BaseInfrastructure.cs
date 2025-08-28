@@ -8,8 +8,25 @@ namespace MF.Infrastructure.Bases;
 /// </summary>
 public abstract class BaseInfrastructure : IDisposable
 {
-    private bool _disposed; // 释放标记
+    protected bool _disposed; // 释放标记
     protected readonly CancellationTokenSource CancellationTokenSource = new();
+
+    /// <summary>
+    /// 获取对象是否已释放
+    /// </summary>
+    protected bool IsDisposed => _disposed;
+
+    /// <summary>
+    /// 检查对象是否已释放，如果已释放则抛出异常
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">对象已释放时抛出</exception>
+    protected void CheckDisposed()
+    {
+        if (_disposed)
+        {
+            throw new ObjectDisposedException(GetType().Name);
+        }
+    }
 
     // 实现 IDisposable.Dispose()
     public void Dispose()

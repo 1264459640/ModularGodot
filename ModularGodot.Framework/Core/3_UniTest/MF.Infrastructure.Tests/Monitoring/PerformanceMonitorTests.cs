@@ -575,7 +575,7 @@ public class PerformanceMonitorTests : IDisposable
     #region 并发测试
 
     [Fact]
-    public void ConcurrentOperations_ShouldHandleCorrectly()
+    public async Task ConcurrentOperations_ShouldHandleCorrectly()
     {
         // Arrange
         const int taskCount = 10;
@@ -597,7 +597,7 @@ public class PerformanceMonitorTests : IDisposable
             });
         }
 
-        Task.WaitAll(tasks);
+        await Task.WhenAll(tasks);
 
         // Assert
         var metrics = _performanceMonitor.GetMetrics();

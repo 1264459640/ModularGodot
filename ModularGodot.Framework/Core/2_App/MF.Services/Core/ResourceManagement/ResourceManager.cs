@@ -252,12 +252,12 @@ public class ResourceManager : BaseService, IResourceCacheService, IResourceMoni
         }
     }
     
-    public async Task<ResourceSystemConfig> GetConfigurationAsync(CancellationToken cancellationToken = default)
+    public Task<ResourceSystemConfig> GetConfigurationAsync(CancellationToken cancellationToken = default)
     {
-        return _config;
+        return Task.FromResult(_config);
     }
     
-    public async Task UpdateConfigurationAsync(ResourceSystemConfig config, CancellationToken cancellationToken = default)
+    public Task UpdateConfigurationAsync(ResourceSystemConfig config, CancellationToken cancellationToken = default)
     {
         // 更新配置逻辑
         _config.MaxMemorySize = config.MaxMemorySize;
@@ -270,6 +270,8 @@ public class ResourceManager : BaseService, IResourceCacheService, IResourceMoni
         
         // 更新内存监控器配置
         _memoryMonitor.MemoryPressureThreshold = config.MemoryPressureThreshold;
+        
+        return Task.CompletedTask;
     }
     
     #endregion
@@ -332,7 +334,7 @@ public class ResourceManager : BaseService, IResourceCacheService, IResourceMoni
                 _performanceMonitor.RecordCounter("cache_items_cleaned", expiredKeys.Count);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // 记录错误
             if (_config.EnablePerformanceMonitoring)
