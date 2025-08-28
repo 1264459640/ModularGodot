@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace MF.Data.Serialization;
+namespace MF.Data.Configuration.Settings;
 
 /// <summary>
 /// 用户游戏设置数据结构

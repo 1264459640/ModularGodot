@@ -1,6 +1,4 @@
-using MF.Data.Transient.Infrastructure.Monitoring;
-
-namespace MF.Infrastructure.Monitoring;
+namespace MF.Infrastructure.Abstractions.Core.Monitoring;
 
 /// <summary>
 /// 性能监控接口
@@ -39,21 +37,5 @@ public interface IPerformanceMonitor
     /// <returns>计时器句柄</returns>
     IDisposable StartTimer(string name, Dictionary<string, string>? tags = null);
     
-    /// <summary>
-    /// 生成性能报告
-    /// </summary>
-    /// <param name="period">报告周期</param>
-    /// <returns>性能报告</returns>
-    Task<PerformanceReport> GenerateReportAsync(TimeSpan period);
-    
-    /// <summary>
-    /// 获取实时统计信息
-    /// </summary>
-    /// <returns>统计信息</returns>
-    PerformanceStatistics GetStatistics();
-    
-    /// <summary>
-    /// 重置所有统计信息
-    /// </summary>
-    void Reset();
+
 }

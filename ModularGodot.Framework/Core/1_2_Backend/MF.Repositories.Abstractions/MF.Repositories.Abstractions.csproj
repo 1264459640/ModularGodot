@@ -18,6 +18,10 @@
       <ProjectReference Include="..\MF.Nodes.Abstractions\MF.Nodes.Abstractions.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Core\" />
+    </ItemGroup>
+
 </Project>
 
 

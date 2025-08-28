@@ -1,4 +1,4 @@
-namespace MF.Data.Transient.Infrastructure.Monitoring;
+namespace MF.Commons.Core.Enums.Infrastructure;
 
 /// <summary>
 /// 内存压力级别

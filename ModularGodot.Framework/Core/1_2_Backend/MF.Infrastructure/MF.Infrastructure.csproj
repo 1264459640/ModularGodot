@@ -1,7 +1,7 @@
 <Project Sdk="Godot.NET.Sdk/4.3.0">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -22,6 +22,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\0_Base\MF.Commons\MF.Commons.csproj" />
+    <ProjectReference Include="..\..\0_Base\MF.Contexts\MF.Contexts.csproj" />
     <ProjectReference Include="..\MF.Infrastructure.Abstractions\MF.Infrastructure.Abstractions.csproj" />
   </ItemGroup>
 
@@ -32,7 +34,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="System.Reactive" Version="6.0.0" />
     <PackageReference Include="R3" Version="1.2.17" />
-    <PackageReference Include="GodotTask" Version="1.0.0" />
+
   </ItemGroup>
 
 </Project>

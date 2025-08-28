@@ -1,10 +1,11 @@
-using Microsoft.Extensions.Caching.Memory;
-using MF.Infrastructure.Abstractions.Caching;
-using MF.Infrastructure.Abstractions.Logging;
 using System.Collections.Concurrent;
 using System.Text.Json;
+using MF.Data.Configuration.Resources;
+using MF.Infrastructure.Abstractions.Core.Caching;
+using MF.Infrastructure.Abstractions.Core.Logging;
+using Microsoft.Extensions.Caching.Memory;
 
-namespace MF.Infrastructure.Caching;
+namespace MF.Infrastructure.Core.Caching;
 
 /// <summary>
 /// 内存缓存服务实现
@@ -174,42 +175,9 @@ public class MemoryCacheService : ICacheService, IDisposable
         }
     }
     
-    public async Task<CacheStatistics> GetStatisticsAsync(CancellationToken cancellationToken = default)
-    {
-        var total = _hits + _misses;
-        var hitRate = total > 0 ? (double)_hits / total : 0.0;
-        
-        return new CacheStatistics
-        {
-            Hits = _hits,
-            Misses = _misses,
-            Sets = _sets,
-            Evictions = _evictions,
-            Errors = _errors,
-            HitRate = hitRate,
-            TotalItems = _entries.Count,
-            TotalSize = _entries.Values.Sum(e => e.Size),
-            EvictionReasons = new Dictionary<string, long>(_evictionReasons)
-        };
-    }
+
     
-    public async Task<Dictionary<string, T?>> GetManyAsync<T>(IEnumerable<string> keys, CancellationToken cancellationToken = default) where T : class
-    {
-        var result = new Dictionary<string, T?>();
-        
-        foreach (var key in keys)
-        {
-            result[key] = await GetAsync<T>(key, cancellationToken);
-        }
-        
-        return result;
-    }
-    
-    public async Task SetManyAsync<T>(Dictionary<string, T> items, TimeSpan? expiration = null, CancellationToken cancellationToken = default) where T : class
-    {
-        var tasks = items.Select(kvp => SetAsync(kvp.Key, kvp.Value, expiration, cancellationToken));
-        await Task.WhenAll(tasks);
-    }
+
     
     private void OnCacheEvicted(object key, object? value, EvictionReason reason, object? state)
     {
@@ -272,35 +240,4 @@ internal class CacheEntry
     public DateTime CreatedAt { get; set; }
     public DateTime LastAccessed { get; set; }
     public DateTime? ExpiresAt { get; set; }
-}
-
-/// <summary>
-/// 缓存配置
-/// </summary>
-public class CacheConfig
-{
-    /// <summary>
-    /// 默认过期时间
-    /// </summary>
-    public TimeSpan DefaultExpiration { get; set; } = TimeSpan.FromHours(1);
-    
-    /// <summary>
-    /// 最大缓存大小（字节）
-    /// </summary>
-    public long MaxCacheSize { get; set; } = 100 * 1024 * 1024; // 100MB
-    
-    /// <summary>
-    /// 是否启用统计信息
-    /// </summary>
-    public bool EnableStatistics { get; set; } = true;
-    
-    /// <summary>
-    /// 缓存压缩阈值
-    /// </summary>
-    public double CompactionPercentage { get; set; } = 0.8;
-    
-    public override string ToString()
-    {
-        return $"DefaultExpiration: {DefaultExpiration}, MaxCacheSize: {MaxCacheSize}, EnableStatistics: {EnableStatistics}";
-    }
 }

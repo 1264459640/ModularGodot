@@ -1,9 +1,9 @@
-using MF.Infrastructure.Abstractions.EventBus;
-using MF.Infrastructure.Abstractions.Logging;
-using R3;
 using System.Collections.Concurrent;
+using MF.Infrastructure.Abstractions.Core.EventBus;
+using MF.Infrastructure.Abstractions.Core.Logging;
+using R3;
 
-namespace MF.Infrastructure.EventBus;
+namespace MF.Infrastructure.Core.EventBus;
 
 /// <summary>
 /// 基于R3的事件总线实现
@@ -12,85 +12,52 @@ public class R3EventBus : IEventBus, IDisposable
 {
     private readonly ConcurrentDictionary<Type, Subject<object>> _subjects = new();
     private readonly CompositeDisposable _disposables = new();
-    private readonly IGameLogger<R3EventBus> _logger;
-    private readonly EventBusConfig _config;
+    private readonly IGameLogger _logger;
     private readonly object _lock = new();
     private bool _disposed;
     
-    // 统计信息
-    private long _totalPublishedEvents;
-    private readonly ConcurrentDictionary<string, long> _eventTypeStatistics = new();
-    private long _errorEvents;
-    private readonly List<double> _processingTimes = new();
-    
-    public R3EventBus(IGameLogger<R3EventBus> logger, EventBusConfig? config = null)
+    /// <summary>
+    /// 基于R3的事件总线实现
+    /// </summary>
+    /// <param name="logger"></param>
+    public R3EventBus(IGameLogger logger)
     {
         _logger = logger;
-        _config = config ?? new EventBusConfig();
         
-        _logger.LogInformation("R3EventBus initialized with config: {Config}", _config);
+        _logger.LogInformation("R3EventBus initialized");
     }
     
-    public async Task PublishAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default) where TEvent : IEvent
+    public async Task PublishAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default) where TEvent : EventBase
     {
         if (_disposed)
         {
             _logger.LogWarning("Attempted to publish event on disposed EventBus: {EventType}", typeof(TEvent).Name);
             return;
         }
-        
-        var startTime = DateTime.UtcNow;
         
         try
         {
             _logger.LogDebug("Publishing event asynchronously: {EventType}, EventId: {EventId}", typeof(TEvent).Name, @event.EventId);
             
             var subject = GetOrCreateSubject<TEvent>();
+            await Task.Run(() => subject.OnNext(@event), cancellationToken);
             
-            if (_config.EnableAsyncPublishing)
-            {
-                await Task.Run(() => subject.OnNext(@event), cancellationToken);
-            }
-            else
-            {
-                subject.OnNext(@event);
-            }
-            
-            // 更新统计信息
-            Interlocked.Increment(ref _totalPublishedEvents);
-            _eventTypeStatistics.AddOrUpdate(typeof(TEvent).Name, 1, (key, value) => value + 1);
-            
-            var processingTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
-            lock (_processingTimes)
-            {
-                _processingTimes.Add(processingTime);
-                if (_processingTimes.Count > 1000) // 保持最近1000次的记录
-                {
-                    _processingTimes.RemoveAt(0);
-                }
-            }
-            
-            _logger.LogDebug("Event published successfully: {EventType}, ProcessingTime: {ProcessingTime}ms", typeof(TEvent).Name, processingTime);
+            _logger.LogDebug("Event published successfully: {EventType}", typeof(TEvent).Name);
         }
         catch (Exception ex)
         {
-            Interlocked.Increment(ref _errorEvents);
             _logger.LogError(ex, "Failed to publish event: {EventType}, EventId: {EventId}", typeof(TEvent).Name, @event.EventId);
-            
-            if (_config.ThrowOnPublishError)
-                throw;
+            throw;
         }
     }
     
-    public void Publish<TEvent>(TEvent @event) where TEvent : IEvent
+    public void Publish<TEvent>(TEvent @event) where TEvent : EventBase
     {
         if (_disposed)
         {
             _logger.LogWarning("Attempted to publish event on disposed EventBus: {EventType}", typeof(TEvent).Name);
             return;
         }
-        
-        var startTime = DateTime.UtcNow;
         
         try
         {
@@ -99,33 +66,16 @@ public class R3EventBus : IEventBus, IDisposable
             var subject = GetOrCreateSubject<TEvent>();
             subject.OnNext(@event);
             
-            // 更新统计信息
-            Interlocked.Increment(ref _totalPublishedEvents);
-            _eventTypeStatistics.AddOrUpdate(typeof(TEvent).Name, 1, (key, value) => value + 1);
-            
-            var processingTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
-            lock (_processingTimes)
-            {
-                _processingTimes.Add(processingTime);
-                if (_processingTimes.Count > 1000)
-                {
-                    _processingTimes.RemoveAt(0);
-                }
-            }
-            
-            _logger.LogDebug("Event published successfully: {EventType}, ProcessingTime: {ProcessingTime}ms", typeof(TEvent).Name, processingTime);
+            _logger.LogDebug("Event published successfully: {EventType}", typeof(TEvent).Name);
         }
         catch (Exception ex)
         {
-            Interlocked.Increment(ref _errorEvents);
             _logger.LogError(ex, "Failed to publish event: {EventType}, EventId: {EventId}", typeof(TEvent).Name, @event.EventId);
-            
-            if (_config.ThrowOnPublishError)
-                throw;
+            throw;
         }
     }
     
-    public IDisposable Subscribe<TEvent>(Action<TEvent> handler) where TEvent : IEvent
+    public IDisposable Subscribe<TEvent>(Action<TEvent> handler) where TEvent : EventBase
     {
         if (_disposed)
             throw new ObjectDisposedException(nameof(R3EventBus));
@@ -144,8 +94,7 @@ public class R3EventBus : IEventBus, IDisposable
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error in event handler for: {EventType}", typeof(TEvent).Name);
-                    if (_config.ThrowOnHandlerError)
-                        throw;
+                    // 不抛出异常，避免影响其他订阅者
                 }
             });
             
@@ -159,7 +108,7 @@ public class R3EventBus : IEventBus, IDisposable
         }
     }
     
-    public IDisposable Subscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : IEvent
+    public IDisposable Subscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : EventBase
     {
         return Subscribe<TEvent>(evt =>
         {
@@ -178,7 +127,7 @@ public class R3EventBus : IEventBus, IDisposable
         });
     }
     
-    public IDisposable Subscribe<TEvent>(Func<TEvent, bool> filter, Action<TEvent> handler) where TEvent : IEvent
+    public IDisposable Subscribe<TEvent>(Func<TEvent, bool> filter, Action<TEvent> handler) where TEvent : EventBase
     {
         return Subscribe<TEvent>(evt =>
         {
@@ -189,7 +138,7 @@ public class R3EventBus : IEventBus, IDisposable
         });
     }
     
-    public IDisposable SubscribeOnce<TEvent>(Action<TEvent> handler) where TEvent : IEvent
+    public IDisposable SubscribeOnce<TEvent>(Action<TEvent> handler) where TEvent : EventBase
     {
         IDisposable? subscription = null;
         subscription = Subscribe<TEvent>(evt =>
@@ -206,28 +155,9 @@ public class R3EventBus : IEventBus, IDisposable
         return subscription;
     }
     
-    public async Task<EventBusStatistics> GetStatisticsAsync()
-    {
-        double averageProcessingTime = 0;
-        lock (_processingTimes)
-        {
-            if (_processingTimes.Count > 0)
-            {
-                averageProcessingTime = _processingTimes.Average();
-            }
-        }
-        
-        return new EventBusStatistics
-        {
-            TotalPublishedEvents = _totalPublishedEvents,
-            ActiveSubscribers = _subjects.Values.Sum(s => s.ObserverCount),
-            EventTypeStatistics = new Dictionary<string, long>(_eventTypeStatistics),
-            ErrorEvents = _errorEvents,
-            AverageProcessingTimeMs = averageProcessingTime
-        };
-    }
+
     
-    private Subject<object> GetOrCreateSubject<TEvent>() where TEvent : IEvent
+    private Subject<object> GetOrCreateSubject<TEvent>() where TEvent : EventBase
     {
         var eventType = typeof(TEvent);
         return _subjects.GetOrAdd(eventType, _ =>
@@ -255,41 +185,5 @@ public class R3EventBus : IEventBus, IDisposable
         }
         
         _logger.LogInformation("R3EventBus disposed");
-    }
-}
-
-/// <summary>
-/// 事件总线配置
-/// </summary>
-public class EventBusConfig
-{
-    /// <summary>
-    /// 是否启用异步发布
-    /// </summary>
-    public bool EnableAsyncPublishing { get; set; } = false;
-    
-    /// <summary>
-    /// 处理器错误时是否抛出异常
-    /// </summary>
-    public bool ThrowOnHandlerError { get; set; } = false;
-    
-    /// <summary>
-    /// 发布错误时是否抛出异常
-    /// </summary>
-    public bool ThrowOnPublishError { get; set; } = true;
-    
-    /// <summary>
-    /// 最大并发处理器数量
-    /// </summary>
-    public int MaxConcurrentHandlers { get; set; } = 10;
-    
-    /// <summary>
-    /// 处理器超时时间
-    /// </summary>
-    public TimeSpan HandlerTimeout { get; set; } = TimeSpan.FromSeconds(30);
-    
-    public override string ToString()
-    {
-        return $"AsyncPublishing: {EnableAsyncPublishing}, ThrowOnHandlerError: {ThrowOnHandlerError}, MaxConcurrentHandlers: {MaxConcurrentHandlers}";
     }
 }

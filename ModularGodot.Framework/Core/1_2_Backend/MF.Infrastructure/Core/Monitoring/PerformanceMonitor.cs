@@ -1,10 +1,9 @@
-using Godot;
-using MF.Infrastructure.Abstractions.Logging;
-using MF.Data.Transient.Infrastructure.Monitoring;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using MF.Infrastructure.Abstractions.Core.Logging;
+using MF.Infrastructure.Abstractions.Core.Monitoring;
 
-namespace MF.Infrastructure.Monitoring;
+namespace MF.Infrastructure.Core.Monitoring;
 
 /// <summary>
 /// 性能监控实现
@@ -16,17 +15,11 @@ public class PerformanceMonitor : IPerformanceMonitor, IDisposable
     private readonly ConcurrentDictionary<string, long> _counters = new();
     private readonly ConcurrentDictionary<string, TimerData> _timers = new();
     private readonly ConcurrentDictionary<string, ActiveTimer> _activeTimers = new();
-    private readonly Timer _reportTimer;
-    private readonly DateTime _startTime;
     private bool _disposed;
     
     public PerformanceMonitor(IGameLogger<PerformanceMonitor> logger)
     {
         _logger = logger;
-        _startTime = DateTime.UtcNow;
-        
-        // 每分钟自动生成报告
-        _reportTimer = new Timer(AutoGenerateReport, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
         
         _logger.LogInformation("PerformanceMonitor initialized");
     }
@@ -133,133 +126,8 @@ public class PerformanceMonitor : IPerformanceMonitor, IDisposable
         return timer;
     }
     
-    public async Task<PerformanceReport> GenerateReportAsync(TimeSpan period)
-    {
-        try
-        {
-            var report = new PerformanceReport
-            {
-                GeneratedAt = DateTime.UtcNow,
-                Period = period
-            };
-            
-            // 生成指标统计
-            foreach (var kvp in _metrics)
-            {
-                var metricData = kvp.Value;
-                lock (metricData)
-                {
-                    if (metricData.Values.Count > 0)
-                    {
-                        var values = metricData.Values.ToArray();
-                        var average = values.Average();
-                        var variance = values.Select(v => Math.Pow(v - average, 2)).Average();
-                        var standardDeviation = Math.Sqrt(variance);
-                        
-                        report.Metrics[kvp.Key] = new MetricStatistics
-                        {
-                            Count = metricData.Count,
-                            Sum = metricData.Sum,
-                            Average = average,
-                            Min = metricData.Min,
-                            Max = metricData.Max,
-                            StandardDeviation = standardDeviation
-                        };
-                    }
-                }
-            }
-            
-            // 生成计数器统计
-            foreach (var kvp in _counters)
-            {
-                report.Counters[kvp.Key] = kvp.Value;
-            }
-            
-            // 生成计时器统计
-            foreach (var kvp in _timers)
-            {
-                var timerData = kvp.Value;
-                lock (timerData)
-                {
-                    if (timerData.Count > 0)
-                    {
-                        var durations = timerData.Durations.OrderBy(d => d.Ticks).ToArray();
-                        var p95Index = (int)(durations.Length * 0.95);
-                        var p99Index = (int)(durations.Length * 0.99);
-                        
-                        report.Timers[kvp.Key] = new TimerStatistics
-                        {
-                            Count = timerData.Count,
-                            TotalTime = timerData.TotalTime,
-                            AverageTime = TimeSpan.FromTicks(timerData.TotalTime.Ticks / timerData.Count),
-                            MinTime = timerData.MinTime,
-                            MaxTime = timerData.MaxTime,
-                            P95Time = durations.Length > 0 ? durations[Math.Min(p95Index, durations.Length - 1)] : TimeSpan.Zero,
-                            P99Time = durations.Length > 0 ? durations[Math.Min(p99Index, durations.Length - 1)] : TimeSpan.Zero
-                        };
-                    }
-                }
-            }
-            
-            // 生成系统信息
-            report.SystemInfo = new SystemInfo
-            {
-                OperatingSystem = OS.GetName(),
-                ProcessorCount = OS.GetProcessorCount(),
-                TotalMemory = GC.GetTotalMemory(false),
-                AvailableMemory = GC.GetTotalMemory(false), // Godot中难以获取可用内存
-                ProcessStartTime = _startTime,
-                Uptime = DateTime.UtcNow - _startTime
-            };
-            
-            _logger.LogInformation("Performance report generated with {MetricCount} metrics, {CounterCount} counters, {TimerCount} timers", 
-                report.Metrics.Count, report.Counters.Count, report.Timers.Count);
-            
-            return report;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error generating performance report");
-            return new PerformanceReport();
-        }
-    }
-    
-    public PerformanceStatistics GetStatistics()
-    {
-        try
-        {
-            return new PerformanceStatistics
-            {
-                TotalMetrics = _metrics.Count,
-                TotalCounters = _counters.Count,
-                TotalTimers = _timers.Count,
-                ActiveTimers = _activeTimers.Count,
-                MemoryUsage = GC.GetTotalMemory(false),
-                CpuUsage = 0.0 // Godot中难以获取CPU使用率
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting performance statistics");
-            return new PerformanceStatistics();
-        }
-    }
-    
-    public void Reset()
-    {
-        try
-        {
-            _metrics.Clear();
-            _counters.Clear();
-            _timers.Clear();
-            
-            _logger.LogInformation("Performance monitor statistics reset");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error resetting performance monitor");
-        }
-    }
+
+
     
     private string CreateKey(string name, Dictionary<string, string>? tags)
     {
@@ -270,34 +138,7 @@ public class PerformanceMonitor : IPerformanceMonitor, IDisposable
         return $"{name}[{tagString}]";
     }
     
-    private void AutoGenerateReport(object? state)
-    {
-        try
-        {
-            _ = Task.Run(async () =>
-            {
-                var report = await GenerateReportAsync(TimeSpan.FromMinutes(1));
-                
-                // 记录关键指标
-                if (report.SystemInfo.MemoryUsage > 500 * 1024 * 1024) // 超过500MB
-                {
-                    _logger.LogWarning("High memory usage detected: {MemoryUsage} MB", 
-                        report.SystemInfo.MemoryUsage / (1024 * 1024));
-                }
-                
-                // 记录慢操作
-                foreach (var timer in report.Timers.Where(t => t.Value.AverageTime.TotalMilliseconds > 100))
-                {
-                    _logger.LogWarning("Slow operation detected: {TimerName}, Average: {AverageTime}ms", 
-                        timer.Key, timer.Value.AverageTime.TotalMilliseconds);
-                }
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in auto report generation");
-        }
-    }
+
     
     internal void CompleteTimer(ActiveTimer timer)
     {
@@ -319,8 +160,6 @@ public class PerformanceMonitor : IPerformanceMonitor, IDisposable
         if (_disposed) return;
         
         _logger.LogInformation("Disposing PerformanceMonitor");
-        
-        _reportTimer.Dispose();
         
         // 完成所有活跃的计时器
         foreach (var timer in _activeTimers.Values)

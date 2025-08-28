@@ -1,4 +1,4 @@
-namespace MF.Infrastructure.Abstractions.Caching;
+namespace MF.Infrastructure.Abstractions.Core.Caching;
 
 /// <summary>
 /// 缓存服务抽象接口 - Critical级别
@@ -48,29 +48,4 @@ public interface ICacheService
     /// <returns>清空任务</returns>
     Task ClearAsync(CancellationToken cancellationToken = default);
     
-    /// <summary>
-    /// 获取缓存统计信息
-    /// </summary>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>统计信息</returns>
-    Task<CacheStatistics> GetStatisticsAsync(CancellationToken cancellationToken = default);
-    
-    /// <summary>
-    /// 批量获取缓存值
-    /// </summary>
-    /// <typeparam name="T">值类型</typeparam>
-    /// <param name="keys">缓存键集合</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>键值对字典</returns>
-    Task<Dictionary<string, T?>> GetManyAsync<T>(IEnumerable<string> keys, CancellationToken cancellationToken = default) where T : class;
-    
-    /// <summary>
-    /// 批量设置缓存值
-    /// </summary>
-    /// <typeparam name="T">值类型</typeparam>
-    /// <param name="items">键值对字典</param>
-    /// <param name="expiration">过期时间</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>设置任务</returns>
-    Task SetManyAsync<T>(Dictionary<string, T> items, TimeSpan? expiration = null, CancellationToken cancellationToken = default) where T : class;
 }

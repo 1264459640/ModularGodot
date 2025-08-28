@@ -1,22 +1,23 @@
-using Godot;
-using MF.Infrastructure.Abstractions.Logging;
-using MF.Data.Transient.Infrastructure.Monitoring;
 using System.Collections.Concurrent;
+using MF.Commons.Core.Enums.Infrastructure;
+using MF.Contexts.Attributes;
+using MF.Infrastructure.Abstractions.Core.Logging;
+using MF.Infrastructure.Abstractions.Core.Monitoring;
 
-namespace MF.Infrastructure.Monitoring;
+namespace MF.Infrastructure.Core.Monitoring;
 
 /// <summary>
-/// 内存监控服务 - Minimal级别（直接实现）
+/// 内存监控服务实现
 /// </summary>
-public class MemoryMonitor : IDisposable
+[SkipRegistration]
+public class MemoryMonitor : IMemoryMonitor, IDisposable
 {
     private readonly IGameLogger<MemoryMonitor> _logger;
     private readonly Timer _monitorTimer;
     private long _lastMemoryUsage;
     private bool _disposed;
-    private readonly ConcurrentQueue<MemorySnapshot> _memoryHistory = new();
     
-    public event Action<MemoryPressureEventArgs>? MemoryPressureDetected;
+    public event Action<long>? MemoryPressureDetected;
     public event Action? AutoReleaseTriggered;
     
     /// <summary>
@@ -75,18 +76,11 @@ public class MemoryMonitor : IDisposable
             _logger.LogWarning("Memory pressure detected: {CurrentUsage} > {Threshold}", 
                 FormatBytes(currentUsage), FormatBytes(AutoReleaseThreshold));
             
-            var eventArgs = new MemoryPressureEventArgs
-            {
-                CurrentUsage = currentUsage,
-                PreviousUsage = _lastMemoryUsage,
-                Threshold = AutoReleaseThreshold,
-                PressureLevel = CalculatePressureLevel(currentUsage)
-            };
-            
-            MemoryPressureDetected?.Invoke(eventArgs);
+            MemoryPressureDetected?.Invoke(currentUsage);
             
             // 如果内存压力很高，触发自动释放
-            if (eventArgs.PressureLevel >= MemoryPressureLevel.High)
+            var pressureLevel = CalculatePressureLevel(currentUsage);
+            if (pressureLevel == "High" || pressureLevel == "Critical")
             {
                 AutoReleaseTriggered?.Invoke();
             }
@@ -123,42 +117,13 @@ public class MemoryMonitor : IDisposable
     }
     
     /// <summary>
-    /// 获取内存统计信息
+    /// 获取当前内存压力级别
     /// </summary>
-    /// <returns>内存统计信息</returns>
-    public MemoryStatistics GetStatistics()
+    /// <returns>内存压力级别</returns>
+    public string GetCurrentPressureLevel()
     {
         var currentUsage = GetCurrentMemoryUsage();
-        var snapshots = _memoryHistory.ToArray();
-        
-        var statistics = new MemoryStatistics
-        {
-            CurrentUsage = currentUsage,
-            PeakUsage = snapshots.Length > 0 ? snapshots.Max(s => s.Usage) : currentUsage,
-            AverageUsage = snapshots.Length > 0 ? (long)snapshots.Average(s => s.Usage) : currentUsage,
-            MinUsage = snapshots.Length > 0 ? snapshots.Min(s => s.Usage) : currentUsage,
-            PressureLevel = CalculatePressureLevel(currentUsage),
-            GCCollectionCounts = new Dictionary<int, int>()
-        };
-        
-        // 获取GC统计信息
-        for (int generation = 0; generation <= GC.MaxGeneration; generation++)
-        {
-            statistics.GCCollectionCounts[generation] = GC.CollectionCount(generation);
-        }
-        
-        return statistics;
-    }
-    
-    /// <summary>
-    /// 获取内存历史记录
-    /// </summary>
-    /// <param name="count">获取的记录数量</param>
-    /// <returns>内存快照列表</returns>
-    public List<MemorySnapshot> GetMemoryHistory(int count = 100)
-    {
-        var snapshots = _memoryHistory.ToArray();
-        return snapshots.TakeLast(count).ToList();
+        return CalculatePressureLevel(currentUsage);
     }
     
     private void CheckMemoryUsage(object? state)
@@ -166,22 +131,6 @@ public class MemoryMonitor : IDisposable
         try
         {
             var currentUsage = GetCurrentMemoryUsage();
-            
-            // 记录内存快照
-            var snapshot = new MemorySnapshot
-            {
-                Usage = currentUsage,
-                Timestamp = DateTime.UtcNow,
-                PressureLevel = CalculatePressureLevel(currentUsage)
-            };
-            
-            _memoryHistory.Enqueue(snapshot);
-            
-            // 保持历史记录在合理范围内
-            while (_memoryHistory.Count > 1000)
-            {
-                _memoryHistory.TryDequeue(out _);
-            }
             
             // 检查内存压力
             CheckMemoryPressure(currentUsage);
@@ -207,16 +156,16 @@ public class MemoryMonitor : IDisposable
         }
     }
     
-    private MemoryPressureLevel CalculatePressureLevel(long currentUsage)
+    private string CalculatePressureLevel(long currentUsage)
     {
         var pressureRatio = (double)currentUsage / AutoReleaseThreshold;
         
         return pressureRatio switch
         {
-            < 0.5 => MemoryPressureLevel.Low,
-            < 0.8 => MemoryPressureLevel.Medium,
-            < 1.0 => MemoryPressureLevel.High,
-            _ => MemoryPressureLevel.Critical
+            < 0.5 => "Low",
+            < 0.8 => "Medium",
+            < 1.0 => "High",
+            _ => "Critical"
         };
     }
     
@@ -243,8 +192,6 @@ public class MemoryMonitor : IDisposable
         
         StopMonitoring();
         _monitorTimer.Dispose();
-        
-        while (_memoryHistory.TryDequeue(out _)) { }
         
         _disposed = true;
         

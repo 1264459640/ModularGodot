@@ -17,7 +17,13 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\0_Base\MF.Commons\MF.Commons.csproj" />
       <ProjectReference Include="..\MF.Commons\MF.Commons.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Configuration\Paths\" />
+      <Folder Include="Transient\GameLogic\Components\" />
     </ItemGroup>
     
 

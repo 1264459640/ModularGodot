@@ -1,3 +1,7 @@
+
+
+using MF.Commons.Core.Enums.Infrastructure;
+
 namespace MF.Data.Transient.Infrastructure.Monitoring;
 
 /// <summary>

@@ -1,5 +1,6 @@
 using System.Reflection;
 using Autofac;
+using MF.Contexts.Attributes;
 using Module = Autofac.Module;
 
 namespace MF.Contexts;
@@ -8,41 +9,71 @@ public class SingleModule : Module
 {
     protected override void Load(ContainerBuilder builder)
     {
-        var servicesAssembly = Assembly.Load("TO.Services");
-        var absServicesAssembly = Assembly.Load("TO.Services.Abstractions");
-        var repoAssembly = Assembly.Load("TO.Repositories");
-        var absRepoAssembly = Assembly.Load("TO.Repositories.Abstractions");
-        
-        var serviceTypes = servicesAssembly.GetTypes()
-            .Where(t => t.Name.EndsWith("Service")
-                        && !t.Name.StartsWith("Node")).ToList();
-        var repoTypes = repoAssembly.GetTypes()
-            .Where(t => !t.Name.StartsWith("Node")
-                        && !t.Name.StartsWith("Base")
-                        && !t.Name.StartsWith("Singleton")).ToList();
-        
-        var absServicesInterfaces = absServicesAssembly.GetTypes()
-            .ToDictionary(t => t.Name, t => t);
-       
-        var absRepoInterfaces = absRepoAssembly.GetTypes()
-            .ToDictionary(t => t.Name, t => t);
-        
-        RegisterTypes(serviceTypes, absServicesInterfaces, builder);
-        RegisterTypes(repoTypes, absRepoInterfaces, builder);
-        ;
+        try
+        {
+            // 注册 IMemoryCache
+            builder.RegisterType<Microsoft.Extensions.Caching.Memory.MemoryCache>()
+                .As<Microsoft.Extensions.Caching.Memory.IMemoryCache>()
+                .SingleInstance();
+
+            // 只加载实现程序集
+            var assemblyNames = new[]
+            {
+                "MF.Services",
+                "MF.Repositories",
+                "MF.Infrastructure"
+            };
+            
+            foreach (var assemblyName in assemblyNames)
+            {
+                try
+                {
+                    var assembly = Assembly.Load(assemblyName);
+                    RegisterAssemblyTypes(assembly, builder);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to load assembly {assemblyName}: {ex.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Assembly loading failed: {ex.Message}");
+        }
     }
     
-    private void RegisterTypes(IEnumerable<Type> implTypes, IDictionary<string, Type> interfaceDict,ContainerBuilder builder)
+    /// <summary>
+    /// 注册程序集中的所有类型
+    /// </summary>
+    private void RegisterAssemblyTypes(Assembly assembly, ContainerBuilder builder)
     {
-        foreach (var implType in implTypes)
+        try
         {
-            var interfaceName = "I" + implType.Name;
-            if (interfaceDict.TryGetValue(interfaceName, out var interfaceType))
-            {
-                
-                builder.RegisterType(implType).As(interfaceType).SingleInstance();
-            }
+            var types = assembly.GetTypes()
+                .Where(t => t.IsClass && !t.IsAbstract)
+                .Where(t => !t.IsDefined(typeof(SkipRegistrationAttribute), false));
             
+            foreach (var type in types)
+            {
+                try
+                {
+                    builder.RegisterType(type)
+                        .AsImplementedInterfaces()
+                        .AsSelf()
+                        .SingleInstance();
+                    
+                    System.Diagnostics.Debug.WriteLine($"Registered: {type.Name} with all implemented interfaces");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to register {type.Name}: {ex.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to process assembly {assembly.FullName}: {ex.Message}");
         }
     }
 }
